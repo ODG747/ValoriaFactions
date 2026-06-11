@@ -1,0 +1,109 @@
+package com.massivecraft.factions.util;
+
+import com.massivecraft.factions.FPlayer;
+import com.massivecraft.factions.FPlayers;
+import com.massivecraft.factions.Faction;
+import com.massivecraft.factions.Factions;
+import com.massivecraft.factions.FactionsPlugin;
+import me.clip.placeholderapi.expansion.PlaceholderExpansion;
+import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
+
+import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+public final class ValoriaPlaceholderAPIManager extends PlaceholderExpansion implements Runnable {
+
+    private static final Pattern TOP_PLACEHOLDER = Pattern.compile("top_faction_(\\d{1,2})_(name|power)");
+    private final FactionsPlugin plugin;
+    private volatile List<FactionSnapshot> topFactions = List.of();
+
+    public ValoriaPlaceholderAPIManager(FactionsPlugin plugin) {
+        this.plugin = plugin;
+        refreshTopFactions();
+        long cacheTicks = Math.max(20L, plugin.getConfig().getLong("performance.top-cache-ticks", 100L));
+        plugin.getServer().getScheduler().runTaskTimer(plugin, this, cacheTicks, cacheTicks);
+    }
+
+    @Override
+    public @NotNull String getIdentifier() {
+        return "valoria";
+    }
+
+    @Override
+    public @NotNull String getAuthor() {
+        return "Valoria";
+    }
+
+    @Override
+    public @NotNull String getVersion() {
+        return plugin.getDescription().getVersion();
+    }
+
+    @Override
+    public boolean persist() {
+        return true;
+    }
+
+    @Override
+    public void run() {
+        refreshTopFactions();
+    }
+
+    @Override
+    public String onPlaceholderRequest(Player player, @NotNull String identifier) {
+        String placeholder = identifier.toLowerCase(Locale.ROOT);
+        Matcher matcher = TOP_PLACEHOLDER.matcher(placeholder);
+        if (matcher.matches()) {
+            int position = Integer.parseInt(matcher.group(1));
+            if (position < 1 || position > 10 || position > topFactions.size()) {
+                return "";
+            }
+            FactionSnapshot snapshot = topFactions.get(position - 1);
+            return matcher.group(2).equals("name") ? snapshot.name() : formatNumber(snapshot.power());
+        }
+
+        if (player == null) {
+            return "";
+        }
+
+        FPlayer fPlayer = FPlayers.getInstance().getByPlayer(player);
+        if (fPlayer == null || !fPlayer.hasFaction()) {
+            return "0";
+        }
+
+        Faction faction = fPlayer.getFaction();
+        return switch (placeholder) {
+            case "faction_members" -> String.valueOf(faction.getFPlayers().size());
+            case "faction_online" -> String.valueOf(faction.getOnlinePlayers().size());
+            case "faction_bank" -> formatNumber(faction.getFactionBalance());
+            case "faction_claims" -> String.valueOf(faction.getLandRounded());
+            default -> null;
+        };
+    }
+
+    private void refreshTopFactions() {
+        List<FactionSnapshot> snapshots = new ArrayList<>();
+        for (Faction faction : Factions.getInstance().getAllNormalFactions()) {
+            snapshots.add(new FactionSnapshot(faction.getTag(), faction.getPower()));
+        }
+        snapshots.sort(Comparator.comparingDouble(FactionSnapshot::power).reversed()
+                .thenComparing(FactionSnapshot::name, String.CASE_INSENSITIVE_ORDER));
+        topFactions = List.copyOf(snapshots.subList(0, Math.min(10, snapshots.size())));
+    }
+
+    private String formatNumber(double value) {
+        if (!Double.isFinite(value)) {
+            return "0";
+        }
+        return BigDecimal.valueOf(value).stripTrailingZeros().toPlainString();
+    }
+
+    private record FactionSnapshot(String name, double power) {
+    }
+}

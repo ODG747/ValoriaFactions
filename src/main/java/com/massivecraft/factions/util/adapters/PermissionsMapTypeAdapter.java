@@ -1,0 +1,87 @@
+package com.massivecraft.factions.util.adapters;
+
+import com.google.gson.*;
+import com.massivecraft.factions.struct.Relation;
+import com.massivecraft.factions.struct.Role;
+import com.massivecraft.factions.util.Logger;
+import com.massivecraft.factions.zcore.fperms.Access;
+import com.massivecraft.factions.zcore.fperms.FPerms;
+import com.massivecraft.factions.zcore.fperms.Permissable;
+import com.massivecraft.factions.zcore.util.TL;
+
+import java.lang.reflect.Type;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+
+public class PermissionsMapTypeAdapter implements JsonDeserializer<Map<Permissable, Map<String, Access>>> {
+
+    @Override
+    public Map<Permissable, Map<String, Access>> deserialize(JsonElement json, Type type, JsonDeserializationContext context) throws JsonParseException {
+
+        try {
+            JsonObject obj = json.getAsJsonObject();
+            if (obj == null) {
+                return null;
+            }
+
+            Map<Permissable, Map<String, Access>> permissionsMap = new ConcurrentHashMap<>();
+
+            // Top level is Relation
+            for (Map.Entry<String, JsonElement> entry : obj.entrySet()) {
+                Permissable permissable = getPermissable(entry.getKey());
+
+                if (permissable == null) {
+                    continue;
+                }
+
+                // Second level is the map between action -> access
+                Map<String, Access> accessMap = new HashMap<>();
+                for (Map.Entry<String, JsonElement> entry2 : entry.getValue().getAsJsonObject().entrySet()) {
+                    String actionId = FPerms.normalizeId(entry2.getKey());
+                    if (actionId == null) continue;
+                    Access access = Access.fromString(entry2.getValue().getAsString());
+                    if (access != null) {
+                        accessMap.put(actionId, access);
+                    }
+                }
+                permissionsMap.put(permissable, accessMap);
+            }
+
+            return permissionsMap;
+
+        } catch (Exception ex) {
+            Logger.print("Error encountered while deserializing a PermissionsMap.", Logger.PrefixType.WARNING);
+            ex.printStackTrace();
+            return null;
+        }
+    }
+
+    private Permissable getPermissable(String name) {
+        // If name is uppercase then it is (probably, no way to completely know) valid if not begin conversion
+        if (name.equals(name.toUpperCase())) {
+            if (Role.fromString(name.toUpperCase()) != null) {
+                return Role.fromString(name.toUpperCase());
+            } else if (Relation.fromString(name.toUpperCase()) != null) {
+                return Relation.fromString(name.toUpperCase());
+            } else {
+                return null;
+            }
+        } else {
+            if (name.equals(TL.ROLE_RECRUIT.toString())) {
+                return Role.RECRUIT;
+            } else if (name.equals(TL.ROLE_NORMAL.toString())) {
+                return Role.NORMAL;
+            } else if (name.equals(TL.ROLE_MODERATOR.toString())) {
+                return Role.MODERATOR;
+            } else {
+                // If it is explicitly member and its old data then it refers to relation member not role, skip it
+                if (name.equals("member")) {
+                    return null;
+                }
+                return Relation.fromString(name);
+            }
+        }
+    }
+
+}
