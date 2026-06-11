@@ -1,6 +1,6 @@
 # ValoriaFactions
 
-Fork de [SaberFactions](https://github.com/SaberLLC/Saber-Factions) adapté pour le serveur **Valoria** — un serveur Minecraft PVP Faction Semi-Anarchique tournant sur Purpur 1.21.8.
+Fork de [SaberFactions](https://github.com/SaberLLC/Saber-Factions) adapté pour **[Valoria](https://discord.gg/aGqWyKEEau)** qui est un serveur Minecraft PVP Faction Semi-Anarchique tournant sur Purpur 1.21.8.
 
 ## Modifications apportées
 
