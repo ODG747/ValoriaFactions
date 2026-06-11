@@ -1,48 +1,66 @@
-# SaberFactions
+# ValoriaFactions
 
-![Downloads](https://img.shields.io/github/downloads/saberllc/saber-factions/total.svg) [![CodeFactor](https://www.codefactor.io/repository/github/driftay/saber-factions/badge)](https://www.codefactor.io/repository/github/driftay/saber-factions) [![License](https://img.shields.io/badge/license-GNU%20General%20Public%20License%20v3.0-brightgreen)](https://github.com/SaberLLC/Saber-Factions/blob/1.6.x/LICENSE) ![GitHub commit activity](https://img.shields.io/github/commit-activity/m/SaberLLC/Saber-Factions) [![](https://jitpack.io/v/SaberLLC/Saber-Factions.svg)](https://jitpack.io/#SaberLLC/Saber-Factions)
+Fork de [SaberFactions](https://github.com/SaberLLC/Saber-Factions) adapté pour le serveur **Valoria** — un serveur Minecraft PVP Faction Semi-Anarchique tournant sur Purpur 1.21.8.
 
-Welcome to SaberFactions, an exotic, performance-optimized, and feature-rich factions plugin dedicated to enhancing the player experience while keeping the cost at nothing. We are committed to continually developing SaberFactions to meet the needs of the growing factions community and attract new players every day.
+## Modifications apportées
 
-## Exciting Features
-Explore our exciting features:
+### Modules désactivés
+Les modules suivants ont été désactivés via la configuration (`modules.<nom>: false`) pour réduire la charge serveur et supprimer les fonctionnalités non pertinentes au gameplay de Valoria :
 
-- **Factions Grace Period**: Temporarily deny raiding between factions.
-- **Factions Alt System**: Allow alts to join a faction and perform tasks while players enjoy the raid.
-- **Factions AntiSpam System**: Suppress spammy faction commands.
-- **More F Upgrades**: Unbreakable Redstone Upgrade, Members Upgrade, and Power Upgrade.
-- **Factions Corner**: Claim your entire buffer with ease.
-- **Command Cooldowns**: Configurable cooldowns for spam commands.
-- **Faction Points**: A currency for all factions gameplay.
-- **Faction Shop**: Buy in-game items with faction points.
-- **Faction Missions**: Challenge your players with exciting missions.
-- **Faction Discord Integration**: Personalized discord bot for each faction.
-- **Faction Audit**: Detailed logging system to monitor faction activities.
-- **Factions Check System**: Automated alerts for checking walls/buffers.
-- **Faction Reserves**: Reserve faction names for specific players.
+| Module | Raison |
+|---|---|
+| Discord de faction | Aucun besoin gameplay |
+| Missions & tributs | Non utilisé sur Valoria |
+| Upgrades | Non utilisé sur Valoria |
+| CoreX (36 addons) | Suppression du scan de classes au démarrage |
+| Dynmap | Non installé sur le serveur |
+| bStats | Télémétrie désactivée |
+| PayPal | Non lié au gameplay |
+| Points & boutique | Module incomplet |
+| Coffre de faction | Remplacé par d'autres mécaniques |
 
-## Dependency With Maven
-```	
-    <repository>
-	    <id>jitpack.io</id>
-	    <url>https://jitpack.io</url>
-    </repository>
-    
-    <dependency>
-        <groupId>com.github.SaberLLC</groupId>
-        <artifactId>Saber-Factions</artifactId>
-        <version>1.6.x-SNAPSHOT</version>
-    </dependency>
+### Corrections et améliorations
+- **Java 21** — le `pom.xml` ciblait Java 8 avec une API Minecraft 1.21, corrigé
+- **api-version** — mis à jour de `1.13` vers `1.21`
+- **MVdWPlaceholderAPI** supprimé — API abandonnée, doublon avec PlaceholderAPI
+- **AsyncPlayerMap** allégé — stockait des références `Player` chaque seconde inutilement
+- **Timer global** — intervalle passé de 4 ticks à 20 ticks (configurable via `performance.timer-update-ticks`)
+- **Top 10 puissance** — snapshot recalculé toutes les 100 ticks au lieu d'un tri à chaque requête
+
+### Ajouts Valoria
+- **Commande `/fadmin`** avec permission `valoria.fadmin` (OP par défaut) :
+  - Gestion : disband, rename, leader, members, kick, join, leave
+  - Puissance : set / add / remove
+  - Claims : add / remove / clear
+  - Économie : money set / add / remove
+  - Outils : inspect et logs
+- **Placeholders PlaceholderAPI** via l'expansion `valoria` :
+  - `%valoria_top_faction_1_name%` à `%valoria_top_faction_10_name%`
+  - `%valoria_top_faction_1_power%` à `%valoria_top_faction_10_power%`
+  - `%valoria_faction_members%`, `%valoria_faction_online%`, `%valoria_faction_bank%`, `%valoria_faction_claims%`
+
+## Prérequis
+
+- Java 21
+- Purpur 1.21.8 (ou Paper/Spigot compatible)
+- [PlaceholderAPI](https://www.spigotmc.org/resources/placeholderapi.6245/)
+- [Vault](https://www.spigotmc.org/resources/vault.34315/) + plugin d'économie
+
+## Compilation
+
+```bash
+mvn clean install
 ```
 
-## Moving Forward
-We value community feedback and plan to incorporate suggestions into future releases. Our aim is to provide the latest and greatest factions/skyblock/prison plugins for Minecraft without compromise.
+Le `.jar` compilé se trouve dans `target/ValoriaFactions.jar`.
 
-## Support
-Got a problem, question, or concern? Join our community Discord server and share your thoughts:
-[Join Saber Discord](https://discord.gg/saber)
+## Installation
 
-We look forward to embarking on this journey with you!
+1. Copier `ValoriaFactions.jar` dans le dossier `/plugins` du serveur
+2. Redémarrer le serveur
+3. Configurer `plugins/Factions/config.yml` selon les besoins
 
-Sincerely,
-The SaberDevelopment Support Team!
+## Licence
+
+Ce projet est un fork de SaberFactions, distribué sous licence [GPL-3.0](LICENSE).  
+Voir aussi les licences tierces dans le dossier [`licenses/`](licenses/).
